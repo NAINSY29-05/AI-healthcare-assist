@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Emergency Assistance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  color: white;
+}
+
+.container {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(15px);
+  border-radius: 25px;
+  padding: 35px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+}
+
+h1 {
+  text-align: center;
+  color: #00eaff;
+  margin-bottom: 25px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+button {
+  margin-top: 22px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #00eaff, #00bcd4);
+  color: #003b44;
+  box-shadow: 0 12px 30px rgba(0,234,255,0.45);
+}
+
+button:hover { transform: scale(1.05); }
+
+.status-box {
+  margin-top: 25px;
+  padding: 20px;
+  border-radius: 18px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.normal { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.warning { background: linear-gradient(135deg, #f1c40f, #e67e22); color: #111; }
+.emergency { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+.actions {
+  margin-top: 18px;
+  background: rgba(255,255,255,0.9);
+  color: #222;
+  padding: 15px;
+  border-radius: 15px;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>🚨 AI Emergency Assistance</h1>
+
+  <label>Patient Name</label>
+  <input id="name">
+
+  <label>Age</label>
+  <input type="number" id="age">
+
+  <label>Gender</label>
+  <select id="gender">
+    <option value="">Select Gender</option>
+    <option value="male">Male</option>
+    <option value="female">Female</option>
+  </select>
+
+  <label>Heart Rate (bpm)</label>
+  <input type="number" id="heartRate">
+
+  <label>Oxygen Level (%)</label>
+  <input type="number" id="oxygen">
+
+  <label>Blood Pressure</label>
+  <input id="bp" placeholder="120/80">
+
+  <label>Symptoms</label>
+  <input id="symptoms" placeholder="chest pain, unconscious">
+
+  <button onclick="analyzePatient()">Analyze Patient</button>
+
+  <div id="status" class="status-box normal">No Data</div>
+  <div id="actions" class="actions"></div>
+</div>
+
+<script>
+async function analyzePatient() {
+  const payload = {
+    name: document.getElementById("name").value,
+    age: document.getElementById("age").value,
+    heart_rate: document.getElementById("heartRate").value,
+    oxygen: document.getElementById("oxygen").value,
+    blood_pressure: document.getElementById("bp").value,
+    symptoms: document.getElementById("symptoms").value
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+
+    const statusBox = document.getElementById("status");
+    const actionsBox = document.getElementById("actions");
+
+    statusBox.className = "status-box " + data.status.toLowerCase();
+    statusBox.innerText =
+      data.status === "EMERGENCY" ? "🚨 EMERGENCY" :
+      data.status === "WARNING" ? "⚠ WARNING" : "✅ NORMAL";
+
+    actionsBox.innerHTML =
+      "<strong>Recommended Actions:</strong><ul>" +
+      data.actions.map(a => <li>${a}</li>).join("") +
+      "</ul>";
+
+  } catch (err) {
+    alert("Backend not responding. Check Flask or MySQL.");
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
